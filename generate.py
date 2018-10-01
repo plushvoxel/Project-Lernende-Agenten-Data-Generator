@@ -7,7 +7,7 @@ from tempfile import NamedTemporaryFile
 
 SAMP_RATE = int(0.5e6)
 
-am = subprocess.Popen(['./grc/am_noisy.py'], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+am = subprocess.Popen(['./grc/fm_noisy.py'], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
 
 ## PWM generator function
 # Args:
@@ -35,7 +35,7 @@ prod = Thread(target=producer)
 prod.start()
 for period in range(SAMP_RATE//10, SAMP_RATE+1, SAMP_RATE//10):
     for duty_cycle_percent in range(0, 101, 10):
-        with NamedTemporaryFile(mode='w+b', suffix='.iq', prefix='am_', dir='./iq/', delete=False) as file:
+        with NamedTemporaryFile(mode='w+b', suffix='.iq', prefix='fm_', dir='./iq/', delete=False) as file:
             # file.open()
             file.write(am.stdout.read(SAMP_RATE*8))
 
