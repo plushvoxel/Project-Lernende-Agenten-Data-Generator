@@ -3,7 +3,7 @@
 ##################################################
 # GNU Radio Python Flow Graph
 # Title: Am Noisy
-# Generated: Mon Oct  1 10:30:21 2018
+# Generated: Fri Oct 12 14:21:45 2018
 ##################################################
 
 from gnuradio import analog
@@ -24,7 +24,7 @@ class am_noisy(gr.top_block):
         ##################################################
         # Variables
         ##################################################
-        self.samp_rate = samp_rate = int(0.5e6)
+        self.samp_rate = samp_rate = 2048
 
         ##################################################
         # Blocks
