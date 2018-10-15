@@ -34,17 +34,16 @@ def producer(dsp):
         pass
 
 def main():
-    tar = tarfile.open("iq.tar", "w")
-    for modulation in modulations:
-        for domain in domains:
-
+    for domain in domains:
+        for modulation in modulations:
+            tar = tarfile.open("{}.tar".format(domain), "w")
             dsp = subprocess.Popen(["./grc/{}_noisy_{}.py".format(modulation, domain)], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
             prod = Thread(target=producer, args=[dsp])
             prod.start()
             for period in range(SAMP_RATE//10, SAMP_RATE//2+1, SAMP_RATE//10):
                 for duty_cycle_percent in range(0, 101, 10):
                     buffer = dsp.stdout.read(SAMP_RATE*2*4)
-                    info = tarfile.TarInfo("{}_{}_{}_{}.iq".format(modulation, domain, period, duty_cycle_percent))
+                    info = tarfile.TarInfo("{}_{}_{}.iq".format(modulation, period, duty_cycle_percent))
                     info.size = len(buffer)
                     tar.addfile(info, BytesIO(buffer))
                     print("{} {}%".format(period, duty_cycle_percent))
