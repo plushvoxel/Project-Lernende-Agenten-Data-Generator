@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 ##################################################
 # GNU Radio Python Flow Graph
-# Title: Am Noisy Fft
-# Generated: Sun Sep 30 14:15:33 2018
+# Title: Fm Noisy Frequency
+# Generated: Mon Oct 15 12:31:54 2018
 ##################################################
 
 from gnuradio import analog
@@ -18,30 +18,35 @@ from optparse import OptionParser
 import pmt
 
 
-class am_noisy_fft(gr.top_block):
+class fm_noisy_frequency(gr.top_block):
 
     def __init__(self):
-        gr.top_block.__init__(self, "Am Noisy Fft")
+        gr.top_block.__init__(self, "Fm Noisy Frequency")
 
         ##################################################
         # Variables
         ##################################################
-        self.samp_rate = samp_rate = int(0.5e6)
+        self.samp_rate = samp_rate = 2048
 
         ##################################################
         # Blocks
         ##################################################
-        self.fft_vxx_0 = fft.fft_vcc(samp_rate, True, (window.blackmanharris(samp_rate)), True, 2)
+        self.fft_vxx_0 = fft.fft_vcc(samp_rate, True, (window.blackmanharris(samp_rate)), True, 1)
         self.blocks_vector_to_stream_0 = blocks.vector_to_stream(gr.sizeof_gr_complex*1, samp_rate)
         self.blocks_uchar_to_float_0 = blocks.uchar_to_float()
         self.blocks_stream_to_vector_0 = blocks.stream_to_vector(gr.sizeof_gr_complex*1, samp_rate)
-        self.blocks_null_source_0 = blocks.null_source(gr.sizeof_float*1)
-        self.blocks_float_to_complex_0 = blocks.float_to_complex(1)
         self.blocks_file_source_0 = blocks.file_source(gr.sizeof_char*1, '/dev/stdin', True)
         self.blocks_file_source_0.set_begin_tag(pmt.PMT_NIL)
         self.blocks_file_sink_0 = blocks.file_sink(gr.sizeof_gr_complex*1, '/dev/stdout', False)
         self.blocks_file_sink_0.set_unbuffered(False)
         self.blocks_add_xx_0 = blocks.add_vcc(1)
+        self.analog_wfm_tx_0 = analog.wfm_tx(
+        	audio_rate=samp_rate,
+        	quad_rate=samp_rate,
+        	tau=75e-6,
+        	max_dev=samp_rate/2,
+        	fh=-1.0,
+        )
         self.analog_noise_source_x_0 = analog.noise_source_c(analog.GR_GAUSSIAN, 0.01, 0)
 
 
@@ -50,12 +55,11 @@ class am_noisy_fft(gr.top_block):
         # Connections
         ##################################################
         self.connect((self.analog_noise_source_x_0, 0), (self.blocks_add_xx_0, 1))
+        self.connect((self.analog_wfm_tx_0, 0), (self.blocks_add_xx_0, 0))
         self.connect((self.blocks_add_xx_0, 0), (self.blocks_stream_to_vector_0, 0))
         self.connect((self.blocks_file_source_0, 0), (self.blocks_uchar_to_float_0, 0))
-        self.connect((self.blocks_float_to_complex_0, 0), (self.blocks_add_xx_0, 0))
-        self.connect((self.blocks_null_source_0, 0), (self.blocks_float_to_complex_0, 1))
         self.connect((self.blocks_stream_to_vector_0, 0), (self.fft_vxx_0, 0))
-        self.connect((self.blocks_uchar_to_float_0, 0), (self.blocks_float_to_complex_0, 0))
+        self.connect((self.blocks_uchar_to_float_0, 0), (self.analog_wfm_tx_0, 0))
         self.connect((self.blocks_vector_to_stream_0, 0), (self.blocks_file_sink_0, 0))
         self.connect((self.fft_vxx_0, 0), (self.blocks_vector_to_stream_0, 0))
 
@@ -66,7 +70,7 @@ class am_noisy_fft(gr.top_block):
         self.samp_rate = samp_rate
 
 
-def main(top_block_cls=am_noisy_fft, options=None):
+def main(top_block_cls=fm_noisy_frequency, options=None):
 
     tb = top_block_cls()
     tb.start()

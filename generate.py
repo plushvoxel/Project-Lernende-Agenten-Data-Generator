@@ -4,10 +4,12 @@ from io import BytesIO
 import subprocess
 from threading import Thread
 from tempfile import NamedTemporaryFile
+import tarfile
 
 SAMP_RATE = 2048
 
-dsp = subprocess.Popen(['./grc/fm_noisy.py'], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+modulations = ["fm", "am"]
+domains = ["time", "frequency"]
 
 ## PWM generator function
 # Args:
@@ -20,24 +22,33 @@ def pwm(period, duty_cycle):
         for i in range(int((1-duty_cycle)*period)):
             yield 0
 
-def producer():
-    for period in range(SAMP_RATE//10, SAMP_RATE+1, SAMP_RATE//10):
+def producer(dsp):
+    for period in range(SAMP_RATE//10, SAMP_RATE//2+1, SAMP_RATE//10):
         for duty_cycle_percent in range(0, 101, 10):
             arr = [x for _, x in zip(range(SAMP_RATE), pwm(period, duty_cycle_percent/100))]
             dsp.stdin.write(bytes(arr))
-    # crude hack
+    # crude hack, do not attempt at home
     try:
-        dsp.stdin.write(b'\x00'*SAMP_RATE*2)
+        dsp.stdin.write(b'\x00'*SAMP_RATE*100)
     except:
         pass
 
-prod = Thread(target=producer)
-prod.start()
-for period in range(SAMP_RATE//10, SAMP_RATE//2+1, SAMP_RATE//10):
-    for duty_cycle_percent in range(0, 101, 10):
-        with NamedTemporaryFile(mode='w+b', suffix='.iq', prefix='fm_', dir='./iq/', delete=False) as file:
+def main():
+    tar = tarfile.open("iq.tar", "w")
+    for modulation in modulations:
+        for domain in domains:
 
-            file.write(dsp.stdout.read(SAMP_RATE*8))
-        print("{} {}%".format(period, duty_cycle_percent))
+            dsp = subprocess.Popen(["./grc/{}_noisy_{}.py".format(modulation, domain)], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+            prod = Thread(target=producer, args=[dsp])
+            prod.start()
+            for period in range(SAMP_RATE//10, SAMP_RATE//2+1, SAMP_RATE//10):
+                for duty_cycle_percent in range(0, 101, 10):
+                    buffer = dsp.stdout.read(SAMP_RATE*2*4)
+                    info = tarfile.TarInfo("{}_{}_{}_{}.iq".format(modulation, domain, period, duty_cycle_percent))
+                    info.size = len(buffer)
+                    tar.addfile(info, BytesIO(buffer))
+                    print("{} {}%".format(period, duty_cycle_percent))
+            dsp.terminate()
 
-dsp.kill()
+if __name__ == "__main__":
+    main()
