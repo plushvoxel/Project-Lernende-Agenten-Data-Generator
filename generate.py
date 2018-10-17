@@ -7,7 +7,7 @@ from tempfile import NamedTemporaryFile
 import tarfile
 
 SAMP_RATE = 2048
-DUTY_CYCLE_STEP = 1
+DUTY_CYCLE_STEP = 5
 PERIOD_STEP = SAMP_RATE//100
 
 
@@ -38,8 +38,8 @@ def producer(dsp):
 
 def main():
     for domain in domains:
+        tar = tarfile.open("{}.tar".format(domain), "w")
         for modulation in modulations:
-            tar = tarfile.open("{}.tar".format(domain), "w")
             dsp = subprocess.Popen(["./grc/{}_noisy_{}.py".format(modulation, domain)], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
             prod = Thread(target=producer, args=[dsp])
             prod.start()
