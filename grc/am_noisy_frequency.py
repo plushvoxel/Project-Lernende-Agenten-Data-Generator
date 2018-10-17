@@ -3,7 +3,7 @@
 ##################################################
 # GNU Radio Python Flow Graph
 # Title: Am Noisy Frequency
-# Generated: Mon Oct 15 12:31:53 2018
+# Generated: Mon Oct 15 13:51:16 2018
 ##################################################
 
 from gnuradio import analog

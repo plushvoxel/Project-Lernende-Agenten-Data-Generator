@@ -7,6 +7,9 @@ from tempfile import NamedTemporaryFile
 import tarfile
 
 SAMP_RATE = 2048
+DUTY_CYCLE_STEP = 1
+PERIOD_STEP = SAMP_RATE//100
+
 
 modulations = ["fm", "am"]
 domains = ["time", "frequency"]
@@ -23,8 +26,8 @@ def pwm(period, duty_cycle):
             yield 0
 
 def producer(dsp):
-    for period in range(SAMP_RATE//10, SAMP_RATE//2+1, SAMP_RATE//10):
-        for duty_cycle_percent in range(0, 101, 10):
+    for period in range(PERIOD_STEP, SAMP_RATE//2+1, PERIOD_STEP):
+        for duty_cycle_percent in range(DUTY_CYCLE_STEP, 101, DUTY_CYCLE_STEP):
             arr = [x for _, x in zip(range(SAMP_RATE), pwm(period, duty_cycle_percent/100))]
             dsp.stdin.write(bytes(arr))
     # crude hack, do not attempt at home
@@ -40,8 +43,8 @@ def main():
             dsp = subprocess.Popen(["./grc/{}_noisy_{}.py".format(modulation, domain)], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
             prod = Thread(target=producer, args=[dsp])
             prod.start()
-            for period in range(SAMP_RATE//10, SAMP_RATE//2+1, SAMP_RATE//10):
-                for duty_cycle_percent in range(0, 101, 10):
+            for period in range(PERIOD_STEP, SAMP_RATE//2+1, PERIOD_STEP):
+                for duty_cycle_percent in range(DUTY_CYCLE_STEP, 101, DUTY_CYCLE_STEP):
                     buffer = dsp.stdout.read(SAMP_RATE*2*4)
                     info = tarfile.TarInfo("{}_{}_{}.iq".format(modulation, period, duty_cycle_percent))
                     info.size = len(buffer)
